@@ -1,0 +1,147 @@
+@page "{symbol}"
+@model IndexModel
+@{
+
+    ViewData["Title"] = $"{Model.Stock.ticker} Page";
+}
+
+<ul class="errors">
+    @foreach (var item in Model._stocksService.GetErrors())
+
+    {
+        <li>@item.StatusCode - @item.Message</li>
+
+    }
+</ul>
+@if (Model.Stock != null)
+{
+    <div class="my-5 text-center">
+        <div class="d-flex justify-content-between">
+            <div class="logo">
+                <img src="@($"{Model.Stock.branding.logo_url}")?apiKey=GdNhXzB_Cb5PmFduSR2WcpxGA8C4Erbv" alt="logo">
+            </div>
+            <div class="me-2 my-auto ml-2">
+                <div>
+                    <div class="title">@Model.Stock.name (@Model.Stock.ticker)</div>
+                    <div class="subtitle">@Model.Stock.homepage_url</div>
+                </div>
+            </div>
+            <div class=" d-flex">
+                <a onclick="() => @Model.AddToWatchlist()"
+                    class="btn btn-primary my-auto">
+                    + Add to watchlist
+                </a>
+            </div>
+        </div>
+        <div class="text-muted mt-3">@Model.Stock.description</div>
+    </div>
+
+    <div class="d-flex mb-3">
+        <div class='e-btn-group mx-auto'>
+            <button class="btn" id="current">Current day</button>
+            <button class="btn" id="1week">1 Week ago</button>
+            <button class="btn" id="1month">1 Month ago</button>
+            <button class="btn" id="3month">3 Months ago</button>
+        </div>
+    </div>
+    <ejs-stockchart id="stockchart" load="stockLoad">
+        <e-stockchart-series-collection>
+            <e-stockchart-series> </e-stockchart-series>
+        </e-stockchart-series-collection>
+    </ejs-stockchart>
+}
+
+<style>
+    ul.errors {
+        list-style-type: none;
+        text-align: center;
+    }
+
+    .errors li {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: red;
+    }
+
+    .logo img {
+        height: 100px;
+        width: auto;
+        margin-right: 20px;
+    }
+
+    .title {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .subtitle {
+        font-size: 1.2rem;
+    }
+
+    .e-btn-group button {
+        padding: 10px 15px;
+    }
+</style>
+
+<script>
+    var stockChart = undefined;
+
+    document.getElementById('current').addEventListener('click', function () {
+        var date = new Date();
+
+        loadData(`${date.getFullYear()}-${date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : date.getMonth()}-${date.getDate()}`)
+    });
+
+    document.getElementById('1week').addEventListener('click', function () {
+        var date = new Date();
+        date.setDate(date.getDate() - 7);
+
+        loadData(`${date.getFullYear()}-${date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : date.getMonth()}-${date.getDate()}`)
+    })
+
+    document.getElementById('1month').addEventListener('click', function () {
+        var date = new Date();
+        date.setMonth(date.getMonth() - 1);
+
+        loadData(`${date.getFullYear()}-${date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : date.getMonth()}-${date.getDate()}`)
+    })
+
+    document.getElementById('3month').addEventListener('click', function () {
+        var date = new Date();
+        date.setMonth(date.getMonth() - 3);
+
+        loadData(`${date.getFullYear()}-${date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : date.getMonth()}-${date.getDate()}`)
+    })
+
+    function loadData(date) {
+        var ticker = document.getElementsByClassName('title')[0].innerText;
+        ticker = ticker.substring(ticker.indexOf('(') + 1, ticker.indexOf(')'));
+        var today = new Date();
+
+        var url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${date}/${today.getFullYear()}-${today.getMonth() + 1 < 10 ? `0${today.getMonth() + 1}` : today.getMonth()}-${today.getDate()}?apiKey=GdNhXzB_Cb5PmFduSR2WcpxGA8C4Erbv`;
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status != 'OK' && data.status != 'DELAYED') return;
+                var stockData = [];
+                if (data.results) {
+                    for (var result of data.results) {
+                        stockData.push({ volume: result.v, date: new Date(result.t), close: result.c, open: result.o, high: result.h, low: result.l })
+                    }
+                }
+                console.log(stockData);
+                stockChart.series[0].dataSource = stockData;
+                stockChart.refresh();
+            })
+            .catch(error => console.log(error));
+    }
+
+    function stockLoad(args) {
+        stockChart = args.stockChart;
+        console.log(stockChart);
+        stockChart.series[0].datasource = [];
+        var date = new Date();
+
+        //loadData(`${date.getFullYear()}-${date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : date.getMonth()}-${date.getDate()}`)
+    }
+</script>

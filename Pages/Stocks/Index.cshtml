@@ -1,0 +1,48 @@
+@page
+@using Models
+@model IndexModel
+@{
+
+    ViewData["Title"] = "Stocks Page";
+}
+<div class="text-center">
+    <h1 class="display-4">Stocks</h1>
+    <div class="search-bar">
+        <ejs-autocomplete id="stocks" allowCustom="true" dataSource="@Model.Stocks" placeholder="e.g. AAPL"
+            select="onSelect"
+            itemTemplate="@Html.Raw("<div class='item'><span class='symbol'>${Symbol}</span><span class='name'>${Name}</span></div>")">
+            <e-autocomplete-fields value="Symbol"></e-autocomplete-fields>
+        </ejs-autocomplete>
+        <a class="btn btn-primary" asp-area="" asp-page="/Stocks/Watchlist">Watchlist</a>
+    </div>
+
+</div>
+<style>
+    .search-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .btn.btn-primary {
+        margin-left: 1em;
+    }
+
+    .item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .symbol {
+        font-weight: bold;
+    }
+</style>
+<script>
+    function onSelect(args) {
+        window.location.href = "/Stocks/Details/" + args.itemData.Symbol;
+    } 
+</script>
